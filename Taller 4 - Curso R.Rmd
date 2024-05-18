@@ -12,9 +12,9 @@ knitr::opts_chunk$set(echo = TRUE)
 #### Cargamos librerías
 ```{r include=FALSE}
 
-rm(list = ls())
+#rm(list = ls())
 
-librerias <- (c("rvest", "purrr","writexl","readxl","sf", "haven", "dplyr"))
+librerias <- (c("rvest", "purrr","writexl","readxl","sf", "haven", "dplyr", "plotly", "ggplot2", "shiny"))
 
 if(length(setdiff(librerias, rownames(installed.packages()))) > 0){
   install.packages(setdiff(librerias, rownames(installed.packages())))}
@@ -78,13 +78,80 @@ ndata2009 <- filter(data2, ano == "2009")
 
 ```{r}
 
-SF2007 <- left_join(ndata2007, sf_data, by = "MPIO_CDPMP")
-SF2008 <- left_join(ndata2008, sf_data, by = "MPIO_CDPMP")
-SF2009 <- left_join(ndata2009, sf_data, by = "MPIO_CDPMP")
+SF2007 <- left_join(sf_data, ndata2007, by = "MPIO_CDPMP")
+SF2008 <- left_join(sf_data, ndata2008, by = "MPIO_CDPMP")
+SF2009 <- left_join(sf_data, ndata2009, by = "MPIO_CDPMP")
 
 ```
 
 ### 1.5 Realicen una visualización de un mapa a nivel municipal con la simbología de la población rural por municipio. Hagan este mapa interactivo usando la librería ggplotly.
+
+```{r}
+
+#ggplot(SF2007) + geom_sf(aes(fill = pobl_rur)
+#ggplot() + geom_sf(data = SF2007) + theme_void()
+#ggplot() + geom_sf(data = SF2007, aes(fill = pobl_rur)) + theme_void() 
+
+Mapa2007 <- ggplotly( ggplot(SF2007) + geom_sf(aes(fill = pobl_rur) ) )
+#Mapa2007
+
+```
+
+### 1.6 Creen un Shiny que interactivamente pueda elegir cualquiera de las variables del punto 1.2) para visualizarlas en un mapa a nivel municipal interactivo. Esto debe verse de la siguiente forma.
+
+```{r}
+
+variables <- colnames(ndata2007)
+
+library(shiny)
+
+ui <- fluidPage(
+  selectInput("Ano", label = "Año", choices = c("SF2007","SF2008","SF2009")),
+  selectInput("Variable", label = "Variable a Visualizar", choices = variables),
+  plotOutput("plot")
+)
+
+server <- function(input, output) {
+  
+  output$plot <- renderPlot({
+    ggplotly( ggplot(SF2007) + geom_sf(aes(fill = input$Variable) ) )
+  }, res = 96)
+
+}
+
+shinyApp(ui, server)
+
+```
+
+
+
+```{r}
+
+library(shiny)
+
+ui <- fluidPage(
+  selectInput("dataset", label = "Dataset", choices = ls("package:datasets")),
+  verbatimTextOutput("summary"),
+  tableOutput("table")
+)
+
+server <- function(input, output, session) {
+  output$summary <- renderPrint({
+    dataset <- get(input$dataset, "package:datasets")
+    summary(dataset)
+  })
+  
+  output$table <- renderTable({
+    dataset <- get(input$dataset, "package:datasets")
+    dataset
+  })
+}
+
+
+shinyApp(ui, server)
+
+
+```
 
 
 
