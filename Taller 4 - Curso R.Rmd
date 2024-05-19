@@ -2,7 +2,9 @@
 title: "Taller 4 - Curso R"
 author: "Andrés Diaz - Yilmer Palacios"
 date: "2024-05-18"
-output: word_document
+output:
+  html_document:
+    df_print: paged
 ---
 
 ```{r setup, include=FALSE}
@@ -88,12 +90,8 @@ SF2009 <- left_join(sf_data, ndata2009, by = "MPIO_CDPMP")
 
 ```{r}
 
-#ggplot(SF2007) + geom_sf(aes(fill = pobl_rur)
-#ggplot() + geom_sf(data = SF2007) + theme_void()
-#ggplot() + geom_sf(data = SF2007, aes(fill = pobl_rur)) + theme_void() 
-
-Mapa2007 <- ggplotly( ggplot(SF2007) + geom_sf(aes(fill = pobl_rur) ) )
-#Mapa2007
+Mapa2007 <- ggplotly( ggplot(SF2007) + geom_sf(aes(fill = pobl_rur) ) + theme_void() )
+Mapa2007
 
 ```
 
@@ -101,57 +99,29 @@ Mapa2007 <- ggplotly( ggplot(SF2007) + geom_sf(aes(fill = pobl_rur) ) )
 
 ```{r}
 
-variables <- colnames(ndata2007)
+variables <- colnames(ndata2007)[3:length(colnames(ndata2007))]
+variables
 
 library(shiny)
 
 ui <- fluidPage(
+  titlePanel("Caracteristicas Poblacionales y PIB en Colombia (2007-2009)"),
   selectInput("Ano", label = "Año", choices = c("SF2007","SF2008","SF2009")),
   selectInput("Variable", label = "Variable a Visualizar", choices = variables),
-  plotOutput("plot")
+  plotlyOutput("plot")
 )
 
 server <- function(input, output) {
   
-  output$plot <- renderPlot({
-    ggplotly( ggplot(SF2007) + geom_sf(aes(fill = input$Variable) ) )
-  }, res = 96)
+  output$plot <- renderPlotly({
+    grafica <- ggplot(get(input$Ano)) + geom_sf(aes(fill = get(input$Variable))) + theme_void()
+    ggrafica <- ggplotly(grafica)
+    ggrafica
+    
+  })
 
 }
 
 shinyApp(ui, server)
 
 ```
-
-
-
-```{r}
-
-library(shiny)
-
-ui <- fluidPage(
-  selectInput("dataset", label = "Dataset", choices = ls("package:datasets")),
-  verbatimTextOutput("summary"),
-  tableOutput("table")
-)
-
-server <- function(input, output, session) {
-  output$summary <- renderPrint({
-    dataset <- get(input$dataset, "package:datasets")
-    summary(dataset)
-  })
-  
-  output$table <- renderTable({
-    dataset <- get(input$dataset, "package:datasets")
-    dataset
-  })
-}
-
-
-shinyApp(ui, server)
-
-
-```
-
-
-
